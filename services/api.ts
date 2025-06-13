@@ -23,26 +23,32 @@ class ApiService {
     }
   }
 
-  private async makeRequest<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const token = await this.getAuthToken();
-    
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...options.headers,
-    };
+private async makeRequest<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token = await this.getAuthToken();
 
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
+  // Crea un objeto Headers y úsalos “type-safe”
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    'Accept':       'application/json',
+    // Desenpaqueta aquí si tu RequestInit trae headers
+    ...(options.headers as Record<string,string>),
+  });
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,  // pasas la instancia de Headers
+  });
+
+    // resto igual…
+
+
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
