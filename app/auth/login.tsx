@@ -14,7 +14,7 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const router = useRouter();
 
   const validateForm = () => {
@@ -89,6 +89,13 @@ export default function LoginScreen() {
             title="Sign In"
             onPress={handleLogin}
             loading={isLoading}
+            style={styles.loginButton}
+          />
+
+          <CustomButton
+            title="Sign In with Google"
+            onPress={loginWithGoogle}
+            variant="secondary"
             style={styles.loginButton}
           />
 

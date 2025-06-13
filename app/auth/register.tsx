@@ -16,7 +16,7 @@ export default function RegisterScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const router = useRouter();
 
   const validateForm = () => {
@@ -120,6 +120,13 @@ export default function RegisterScreen() {
             title="Create Account"
             onPress={handleRegister}
             loading={isLoading}
+            style={styles.registerButton}
+          />
+
+          <CustomButton
+            title="Sign Up with Google"
+            onPress={loginWithGoogle}
+            variant="secondary"
             style={styles.registerButton}
           />
 
