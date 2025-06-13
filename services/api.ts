@@ -6,6 +6,7 @@ import {
   ConfigResponse,
   ProductsResponse,
   CreateProductRequest,
+  Product,
   User,
   ApiError,
 } from '../types/api';
