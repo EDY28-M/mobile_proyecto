@@ -1,4 +1,15 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import jwtDecode from 'jwt-decode';
+import { makeRedirectUri } from 'expo-auth-session';
 import { User } from '../types/api';
 import { apiService } from '../services/api';
 
@@ -8,6 +19,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -30,6 +42,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  WebBrowser.maybeCompleteAuthSession();
+
+  const [_googleRequest, googleResponse, promptGoogleLogin] =
+    Google.useIdTokenAuthRequest({
+      clientId:
+        '659951375693-30d2b3d30ug2ccucoi4hr6jbdhte108r.apps.googleusercontent.com',
+      issuer: 'https://accounts.google.com',
+      scopes: ['openid', 'profile', 'email'],
+      strictDiscoveryDocumentValidation: false,
+      redirectUri: makeRedirectUri({ useProxy: true }),
+    });
+
+  useEffect(() => {
+    if (googleResponse?.type === 'success' && googleResponse.params.id_token) {
+      (async () => {
+        const token = googleResponse.params.id_token as string;
+        await AsyncStorage.setItem('google_token', token);
+        const info: any = jwtDecode(token);
+        setUser({
+          id: info.sub ? Number(info.sub) : -1,
+          name: info.name,
+          email: info.email,
+          created_at: '',
+          updated_at: '',
+        });
+      })();
+    }
+  }, [googleResponse]);
+
   const isAuthenticated = !!user;
 
   useEffect(() => {
@@ -42,10 +83,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (authenticated) {
         const userData = await apiService.getMe();
         setUser(userData);
+        return;
+      }
+
+      const googleToken = await AsyncStorage.getItem('google_token');
+      if (googleToken) {
+        const info: any = jwtDecode(googleToken);
+        setUser({
+          id: info.sub ? Number(info.sub) : -1,
+          name: info.name,
+          email: info.email,
+          created_at: '',
+          updated_at: '',
+        });
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       await apiService.removeAuthToken();
+      await AsyncStorage.removeItem('google_token');
     } finally {
       setIsLoading(false);
     }
@@ -71,9 +126,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const loginWithGoogle = async () => {
+    await promptGoogleLogin();
+  };
+
   const logout = async () => {
     try {
       await apiService.removeAuthToken();
+      await AsyncStorage.removeItem('google_token');
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
@@ -82,8 +142,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const refreshUser = async () => {
     try {
-      const userData = await apiService.getMe();
-      setUser(userData);
+      const token = await AsyncStorage.getItem('auth_token');
+      if (token) {
+        const userData = await apiService.getMe();
+        setUser(userData);
+        return;
+      }
+
+      const googleToken = await AsyncStorage.getItem('google_token');
+      if (googleToken) {
+        const info: any = jwtDecode(googleToken);
+        setUser({
+          id: info.sub ? Number(info.sub) : -1,
+          name: info.name,
+          email: info.email,
+          created_at: '',
+          updated_at: '',
+        });
+      }
     } catch (error) {
       console.error('Refresh user failed:', error);
       await logout();
@@ -96,6 +172,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated,
     login,
     register,
+    loginWithGoogle,
     logout,
     refreshUser,
   };
