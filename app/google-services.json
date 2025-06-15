@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "60758816440",
+    "project_id": "avisonline-app",
+    "storage_bucket": "avisonline-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:60758816440:android:62515b601d210ab2ea664d",
+        "android_client_info": {
+          "package_name": "com.example.avisonline"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJwuCHFqooXEXHDn_qbkWSdELelziDMjA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
